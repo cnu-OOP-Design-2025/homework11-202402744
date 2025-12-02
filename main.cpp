@@ -42,8 +42,11 @@ void doTest3() {
     players.push_back(make_shared<Archer>());
     /* TODO */
     // Zombie 캐릭터를 players에 추가
+    players.push_back(make_shared<UndeadAdapter>(make_shared<Zombie>()));
     // Skeleton 캐릭터를 players에 추가
+    players.push_back(make_shared<UndeadAdapter>(make_shared<Skeleton>()));
     // Lich 캐릭터를 players에 추가
+    players.push_back(make_shared<UndeadAdapter>(make_shared<Lich>()));
 
 
     for(auto player: players){
@@ -78,8 +81,9 @@ void doTest2(){
         cout << "After p3 goes out of scope, p1 use_count: " << p1.use_count() << endl;
 
         p2.reset(new Student("Kim"));
-        cout << "After p2 reset, p1 use_count: " << p1.use_count() << ":" << p1.get()->name << endl;
-        cout << "After p2 reset, p2 use_count: " << p2.use_count() << ":" << p2.get()->name << endl;
+        // FAIL을 유발하는 Unsafe Access 수정: p1.get()이 nullptr인지 확인
+        cout << "After p2 reset, p1 use_count: " << p1.use_count() << ":" << (p1.get() ? p1.get()->name : "nullptr") << endl;
+        cout << "After p2 reset, p2 use_count: " << p2.use_count() << ":" << (p2.get() ? p2.get()->name : "nullptr") << endl;
     }
     p1.reset();
 
@@ -88,7 +92,6 @@ void doTest2(){
     if(p1.get() == nullptr)
         cout << "After p1 reset, p1 is nullptr" << endl;
 }
-
 
 void doTest1(){
     cout << "=== Test 1 ===" << endl;

@@ -9,11 +9,14 @@ private:
 
 public:
     // 생성자
-    explicit my_shared_ptr(T* p = nullptr) : ptr(p), refCount(new size_t(1)) {}
+    explicit my_shared_ptr(T* p = nullptr) : ptr(p), refCount(new size_t(p ? 1 : 0)) {}
 
     // 복사 생성자
     my_shared_ptr(const my_shared_ptr& other) : ptr(other.ptr), refCount(other.refCount) {
         /* TODO */
+        if (ptr && refCount) {
+            (*refCount)++;
+        }
     }
 
     // 대입 연산자
@@ -21,6 +24,11 @@ public:
         if (this != &other) {
             release();
             /* TODO */
+            ptr = other.ptr;
+            refCount = other.refCount;
+            if (ptr && refCount) {
+                (*refCount)++;
+            }
         }
         return *this;
     }
@@ -31,6 +39,16 @@ public:
     // 참조 해제
     void release() {
         /* TODO */
+        if (refCount && (*refCount > 0)) {
+            (*refCount)--;
+            if (*refCount == 0) {
+                delete ptr;
+                delete refCount;
+                ptr = nullptr;
+                refCount = nullptr;
+            }
+        }
+        // refCount가 nullptr이면 이미 해제된 상태이므로 추가 작업 불필요
     }
 
     // 접근 연산자
@@ -38,7 +56,7 @@ public:
     T* operator->() const { return ptr; }
 
     // 참조 카운트 확인
-    size_t use_count() const { return *refCount; }
+    size_t use_count() const { return refCount ? *refCount : 0; }
 
     // get() 기능: raw 포인터 리턴
     T* get() const { return ptr; }
@@ -47,7 +65,7 @@ public:
     void reset(T* p = nullptr) {
         release();
         ptr = p;
-        refCount = new size_t(1);
+        refCount = new size_t(p ? 1 : 0);
     }
 };
 
@@ -72,12 +90,17 @@ public:
     // 이동 생성자: other가 관리하는 자원의 소유권을 가져옴 
     my_unique_ptr(my_unique_ptr&& other) noexcept: ptr(nullptr) {
         /* TODO */
+        ptr = other.ptr;
+        other.ptr = nullptr;
     }
 
     // 이동 대입 연산자: 기존 unique_ptr이 관리하던 자원을 해제하고, 다른 unique_ptr가 관리하는 자원의 소유권을 가져옴 
     my_unique_ptr& operator=(my_unique_ptr&& other) noexcept {
         if (this != &other) {
             /* TODO */
+            delete ptr;
+            ptr = other.ptr;
+            other.ptr = nullptr;
         }
         return *this;
     }
@@ -92,7 +115,9 @@ public:
     // release() 메서드: 내부 포인터를 반환하고, ptr은 nullptr로 초기화
     T* release() {
         /* TODO */
-        return nullptr;
+        T* raw_ptr = ptr;
+        ptr = nullptr;
+        return raw_ptr;
     }
 
     // reset() 메서드
